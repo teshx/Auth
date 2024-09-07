@@ -1,5 +1,6 @@
 import { user } from "../models/userSchema.js";
 import bcrypt from "bcrypt";
+import { generatTookenandsetcookies } from "../Util/generatTookenandsetcookies.js";
 export const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
@@ -31,8 +32,24 @@ export const signup = async (req, res) => {
       verificationToken,
       verificationExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 houres
     });
+
+    await User.save();
+    //jwt
+    generatTookenandsetcookies(res, user._id);
+
+    res.status(201).json({
+      success: true,
+      message: "user is success fuly created",
+      User: {
+        ...User._doc,
+        password: undefined,
+      },
+    });
   } catch (error) {
-    console.log("This is :", error);
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 export const signin = async (req, res) => {
