@@ -1,7 +1,7 @@
 import { user } from "../models/userSchema.js";
 import bcrypt from "bcrypt";
 import { generatTookenandsetcookies } from "../Util/generatTookenandsetcookies.js";
-import { sendverificationEmail } from "../mailTrap/emails.js";
+import { sendverificationEmail, sendWelcomeEmail } from "../mailTrap/emails.js";
 export const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
@@ -55,10 +55,37 @@ export const signup = async (req, res) => {
   }
 };
 export const verifyEmail = async (req, res) => {
-  res.send("logout");
+  const { code } = req.body;
+  //123456
+  try {
+    const User = await user.findOne({
+      verificationToken: code,
+      verificationExpires: { $gt: Date.now() },
+    });
+
+    if (!User) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid or expired verification" });
+    }
+    User.isverified = true;
+    User.verificationToken = undefined;
+    User.verificationExpires = undefined;
+
+    await User.save();
+
+    await sendWelcomeEmail(User.email, User.username);
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfuly",
+      User: {
+        ...User._doc,
+        password: undefined,
+      },
+    });
+  } catch (error) {}
 };
-
-
 
 export const signin = async (req, res) => {
   res.send("signin");
@@ -66,6 +93,3 @@ export const signin = async (req, res) => {
 export const login = async (req, res) => {
   res.send("login");
 };
-
-
-
