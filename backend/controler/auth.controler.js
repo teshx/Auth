@@ -1,6 +1,7 @@
 import { user } from "../models/userSchema.js";
 import bcrypt from "bcrypt";
 import { generatTookenandsetcookies } from "../Util/generatTookenandsetcookies.js";
+import { sendverificationEmail } from "../mailTrap/emails.js";
 export const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
@@ -20,10 +21,10 @@ export const signup = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    //verificatiionToken
     const verificationToken = Math.floor(
-      Math.random(100000 + Math.random() * 900000).toString()
-    );
+      100000 + Math.random() * 900000
+    ).toString();
 
     const User = new user({
       email,
@@ -36,6 +37,7 @@ export const signup = async (req, res) => {
     await User.save();
     //jwt
     generatTookenandsetcookies(res, user._id);
+    sendverificationEmail(User.email, verificationToken);
 
     res.status(201).json({
       success: true,
@@ -52,12 +54,18 @@ export const signup = async (req, res) => {
     });
   }
 };
+export const verifyEmail = async (req, res) => {
+  res.send("logout");
+};
+
+
+
 export const signin = async (req, res) => {
   res.send("signin");
 };
 export const login = async (req, res) => {
   res.send("login");
 };
-export const logout = async (req, res) => {
-  res.send("logout");
-};
+
+
+

@@ -5,6 +5,7 @@ export const generatTookenandsetcookies = (res, user_id) => {
     expiresIn: "7d",
   });
 
+  
   res.cookie("tooken", token, {
     maxAge: 7 * 24 * 60 * 60 * 1000, //7 day in mmillisecond
     httpOnly: true, // prevent xss attacks croos-site scripting attacks ,make it not accessed by js
@@ -13,3 +14,6 @@ export const generatTookenandsetcookies = (res, user_id) => {
   });
   return token;
 };
+
+
+
