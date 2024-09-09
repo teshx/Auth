@@ -1,4 +1,5 @@
 import { user } from "../models/userSchema.js";
+
 import bcrypt from "bcrypt";
 import { generatTookenandsetcookies } from "../Util/generatTookenandsetcookies.js";
 import { sendverificationEmail, sendWelcomeEmail } from "../mailTrap/emails.js";
@@ -37,6 +38,7 @@ export const signup = async (req, res) => {
     await User.save();
     //jwt
     generatTookenandsetcookies(res, user._id);
+
     sendverificationEmail(User.email, verificationToken);
 
     res.status(201).json({
@@ -54,6 +56,7 @@ export const signup = async (req, res) => {
     });
   }
 };
+
 export const verifyEmail = async (req, res) => {
   const { code } = req.body;
   //123456
@@ -92,9 +95,44 @@ export const logout = async (req, res) => {
   res.status(200).json({ success: true, message: "logged out successfuly" });
 };
 
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  console.log("biging");
+  try {
+    const User = await user.findOne({ email });
+
+    if (!User) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid credentials email" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, User.password);
+    if (!isPasswordValid) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid credentials paaword" });
+    }
+    generatTookenandsetcookies(res, User._id);
+    User.lastlogin = new Date();
+    await User.save();
+    console.log("work");
+    res.status(200).json({
+      success: true,
+      message: "login is successfuly",
+      User: {
+        ...User._doc,
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const signin = async (req, res) => {
   res.send("signin");
-};
-export const login = async (req, res) => {
-  res.send("login");
 };
