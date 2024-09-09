@@ -8,6 +8,7 @@ import {
   sendverificationEmail,
   sendWelcomeEmail,
   sendpassworedresetEmail,
+  sendResetSuccessfullEmail,
 } from "../mailTrap/emails.js";
 export const signup = async (req, res) => {
   const { email, password, username } = req.body;
@@ -141,8 +142,8 @@ export const login = async (req, res) => {
 export const forgotpassword = async (req, res) => {
   const { email } = req.body;
   try {
-    const User =  await user.findOne({ email });
-    
+    const User = await user.findOne({ email });
+
     if (!User) {
       res.status(404).json({
         success: false,
@@ -160,9 +161,45 @@ export const forgotpassword = async (req, res) => {
     console.log("User saved successfully");
     await sendpassworedresetEmail(
       User.email,
-      `http://localhost:5173/reset-password/${resetToken}`
+      `http://localhost:5000/reset-password/${resetToken}`
     );
 
+    res
+      .status(200)
+      .json({ success: true, message: "send resetEmail successfuly" });
+  } catch (error) {
+    console.log("this is final error");
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+    const User = await user.findOne({
+      resetPassworedToken: token,
+      resetPassworedExpiresAt: { $gt: Date.now() },
+    });
+
+    if (!User) {
+      res
+        .status(404)
+        .json({ success: false, message: "Invalid or Expired reset token" });
+    }
+
+    //update password
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    User.password = hashedPassword;
+    User.resetPassworedToken = undefined;
+    User.resetPassworedExpiresAt = undefined;
+    await User.save();
+    await sendResetSuccessfullEmail(User.email);
     res
       .status(200)
       .json({ success: true, message: "send resetEmail successfuly" });
