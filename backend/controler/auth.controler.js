@@ -97,7 +97,7 @@ export const verifyEmail = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("tooken");
   res.status(200).json({ success: true, message: "logged out successfuly" });
 };
 
@@ -194,7 +194,6 @@ export const resetPassword = async (req, res) => {
     //update password
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     User.password = hashedPassword;
     User.resetPassworedToken = undefined;
     User.resetPassworedExpiresAt = undefined;
@@ -203,6 +202,27 @@ export const resetPassword = async (req, res) => {
     res
       .status(200)
       .json({ success: true, message: "send resetEmail successfuly" });
+  } catch (error) {
+    console.log("this is final error");
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const checkAuth = async (req, res) => {
+  try {
+    const User = await user.findById(req.user_id).select("-password");
+    if (!User) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User is not Found" });
+    }
+
+    res.status(200).json({
+      success: true,
+    });
   } catch (error) {
     console.log("this is final error");
     res.status(404).json({
