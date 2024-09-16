@@ -161,7 +161,7 @@ export const forgotpassword = async (req, res) => {
     console.log("User saved successfully");
     await sendpassworedresetEmail(
       User.email,
-      `http://localhost:5000/reset-password/${resetToken}`
+      `http://localhost:5173/reset-password/${resetToken}`
     );
 
     res
@@ -221,6 +221,10 @@ export const checkAuth = async (req, res) => {
     }
 
     res.status(200).json({
+      User: {
+        ...User._doc,
+        password: undefined,
+      },
       success: true,
     });
   } catch (error) {
